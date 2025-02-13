@@ -1,7 +1,11 @@
-from django.urls import path, include
-from .views  import homePageView
+from django.urls import path
+from .views import HomePageView, AboutPageView, ContactPageView, ProductIndexView, ProductShowView
 
-urlPatterns = [
-    path("", homePageView, name='home'),
-    path('', include('pages.urls')),
+
+urlpatterns = [
+    path("", HomePageView.as_view(), name='home'),
+    path('about/', AboutPageView.as_view(), name='about'),
+    path('contact/', ContactPageView.as_view(), name='contact'),
+    path('products/', ProductIndexView.as_view(), name='index'),
+    path('products/<str:id>', ProductShowView.as_view(), name='show'),
 ]
