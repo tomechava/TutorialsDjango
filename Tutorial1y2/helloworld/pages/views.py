@@ -47,8 +47,8 @@ class ProductShowView(View):
     template_name = "products/show.html"
 
     def get(self, request, id):
-        
-        #Check if product id is valid
+
+        # Check if product id is valid
         try:
             product_id = int(id)
             if product_id < 1:
@@ -56,32 +56,33 @@ class ProductShowView(View):
             product = get_object_or_404(Product, pk=product_id)
         except (ValueError, IndexError):
             # If the product id is not valid, redirect to the home page
-            return HttpResponseRedirect(reverse('home'))
+            return HttpResponseRedirect(reverse("home"))
 
         viewData = {}
         product = get_object_or_404(Product, pk=product_id)
         viewData["title"] = product.name + " - Online Store"
         viewData["subtitle"] = product.name + " - Product information"
         viewData["product"] = product
-        
+
         return render(request, self.template_name, viewData)
-        
-        
+
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'price'] 
- 
+        fields = ["name", "price"]
+
+
 class ProductCreateView(View):
-    template_name = 'products/create.html'
- 
+    template_name = "products/create.html"
+
     def get(self, request):
         form = ProductForm()
         viewData = {}
         viewData["title"] = "Create product"
         viewData["form"] = form
         return render(request, self.template_name, viewData)
-    
+
     def post(self, request):
         form = ProductForm(request.POST)
         if form.is_valid():
@@ -91,17 +92,65 @@ class ProductCreateView(View):
             viewData = {"title": "Create product", "form": form}
             return render(request, self.template_name, viewData)
 
+
 class SuccessPageView(TemplateView):
     template_name = "products/success.html"
-    
-        
+
+
 class ProductListView(ListView):
     model = Product
-    template_name = 'product_list.html'
-    context_object_name = 'products' # This will allow you to loop through 'products' in your template
+    template_name = "product_list.html"
+    context_object_name = (
+        "products"  # This will allow you to loop through 'products' in your template
+    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Products - Online Store'
-        context['subtitle'] = 'List of products'
+        context["title"] = "Products - Online Store"
+        context["subtitle"] = "List of products"
         return context
+
+
+class CartView(View):
+    template_name = "cart/index.html"
+
+    def get(self, request):
+        # Simulated database for products
+        products = {}
+        products[121] = {"name": "Tv samsung", "price": "1000"}
+        products[11] = {"name": "Iphone", "price": "2000"}
+
+        # Get cart products from session
+        cart_products = {}
+        cart_product_data = request.session.get("cart_product_data", {})
+
+        for key, product in products.items():
+            if str(key) in cart_product_data.keys():
+                cart_products[key] = product
+
+        # Prepare data for the view
+        view_data = {
+            "title": "Cart - Online Store",
+            "subtitle": "Shopping Cart",
+            "products": products,
+            "cart_products": cart_products,
+        }
+
+        return render(request, self.template_name, view_data)
+
+    def post(self, request, product_id):
+        # Get cart products from session and add the new product
+        cart_product_data = request.session.get("cart_product_data", {})
+        cart_product_data[product_id] = product_id
+        request.session["cart_product_data"] = cart_product_data
+
+        return redirect("cart_index")
+
+
+class CartRemoveAllView(View):
+    def post(self, request):
+        # Remove all products from cart in session
+        if "cart_product_data" in request.session:
+            del request.session["cart_product_data"]
+
+        return redirect("cart_index")
